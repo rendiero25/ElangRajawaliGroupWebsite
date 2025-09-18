@@ -10,10 +10,13 @@ const sectionSchema = new mongoose.Schema({
     description: String,
     buttonLink: String,
     buttonText: String,
-    video: String,
+    backgroundVideo: String,
     image: String,
     backgroundImage: String,
     icon: String,
+    button: String,
+    textButton: String,
+    infoSideButton: String
 });
 
 export default mongoose.model("Section", sectionSchema);

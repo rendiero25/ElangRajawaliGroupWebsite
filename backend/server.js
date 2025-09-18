@@ -10,6 +10,19 @@ const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 const app = express();
 
+// CORS middleware
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    
+    if (req.method === 'OPTIONS') {
+        res.sendStatus(200);
+    } else {
+        next();
+    }
+});
+
 app.use(express.json());
 
 // Route root
@@ -51,11 +64,14 @@ app.get("/", (req, res) => {
     `);
 });
 
+//Serve uploaded files
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 //Routes
 import sectionRoutes from "./routes/section.js";
 import newsRoutes from "./routes/news.js";
 
-app.use("/api/sections", sectionRoutes);
+app.use("/api", sectionRoutes);
 app.use("/api/news", newsRoutes);
 
 

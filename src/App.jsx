@@ -1,5 +1,8 @@
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
+import Dashboard from "./pages/dashboard/Dashboard";
+import Home from "./pages/company-profile/Home";
 
 const App = () => {
 
@@ -19,8 +22,16 @@ const App = () => {
 
     return (
         <>
-            <Header headerMenu={headerMenu} />
-            <Footer footerMenu={headerMenu} />
+            <Router>
+                <Header headerMenu={headerMenu} />
+
+                <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/admin/*" element={<Dashboard />} />
+                </Routes>
+                
+                <Footer footerMenu={headerMenu} />
+            </Router>
         </>
     );
 };
