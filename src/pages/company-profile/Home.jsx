@@ -3,10 +3,12 @@ import NewsSec from "../../components/company-profile/NewsSec";
 
 const Home = () => {
     return (
-        <>
-            <HeroSec />
-            <NewsSec />
-        </>
+        <div className="font-primary flex flex-col gap-30">
+            <HeroSec/>
+            <div className="-mt-30 mb-30">
+                <NewsSec/>
+            </div>
+        </div>
     );
 };
 

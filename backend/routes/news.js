@@ -157,14 +157,16 @@ router.post("/", upload.single('image'), async (req, res) => {
         
         // Handle image: either file upload or URL
         if (req.file) {
-            newsData.image = `/uploads/${req.file.filename}`;
-            console.log('Image uploaded:', newsData.image);
+            newsData.image = `http://localhost:5000/uploads/${req.file.filename}`;
+            console.log('✅ Image uploaded and URL set:', newsData.image);
         } else if (req.body.imageUrl) {
             newsData.image = req.body.imageUrl;
-            console.log('Image URL used:', newsData.image);
+            console.log('✅ Image URL used:', newsData.image);
         } else if (req.body.image) {
             newsData.image = req.body.image;
-            console.log('Image from form:', newsData.image);
+            console.log('✅ Image from form:', newsData.image);
+        } else {
+            console.log('⚠️ No image provided');
         }
         
         console.log('News data to save:', newsData);
@@ -172,8 +174,12 @@ router.post("/", upload.single('image'), async (req, res) => {
         const news = new News(newsData);
         await news.save();
         
-        console.log('News saved successfully:', news._id);
-        res.json(news);
+        console.log('✅ News with file saved successfully:', news._id);
+        res.status(201).json({
+            success: true,
+            message: 'News created successfully with file',
+            data: news
+        });
     } catch (error) {
         console.error('Error creating news:', error);
         res.status(500).json({ error: error.message });
@@ -202,14 +208,16 @@ router.put("/:id", upload.single('image'), async (req, res) => {
         
         // Handle image: either file upload or URL
         if (req.file) {
-            newsData.image = `/uploads/${req.file.filename}`;
-            console.log('Update Image uploaded:', newsData.image);
+            newsData.image = `http://localhost:5000/uploads/${req.file.filename}`;
+            console.log('✅ Update: Image uploaded and URL set:', newsData.image);
         } else if (req.body.imageUrl) {
             newsData.image = req.body.imageUrl;
-            console.log('Update Image URL used:', newsData.image);
+            console.log('✅ Update: Image URL used:', newsData.image);
         } else if (req.body.image) {
             newsData.image = req.body.image;
-            console.log('Update Image from form:', newsData.image);
+            console.log('✅ Update: Image from form:', newsData.image);
+        } else {
+            console.log('⚠️ Update: No image provided');
         }
         
         console.log('Update News data:', newsData);
@@ -220,8 +228,12 @@ router.put("/:id", upload.single('image'), async (req, res) => {
             return res.status(404).json({ error: 'News not found' });
         }
         
-        console.log('News updated successfully:', updated._id);
-        res.json(updated);
+        console.log('✅ News updated successfully:', updated._id);
+        res.json({
+            success: true,
+            message: 'News updated successfully',
+            data: updated
+        });
     } catch (error) {
         console.error('Error updating news:', error);
         res.status(500).json({ error: error.message });

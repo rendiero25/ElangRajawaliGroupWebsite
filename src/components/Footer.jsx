@@ -19,7 +19,7 @@ const Footer = ({footerMenu}) => {
 
     return (
         <div className="bg-gradient-to-b from-comproPrimary to-comproSecondary h-auto">
-            <div className="container mx-auto px-6 flex flex-col justify-between items-center gap-10 lg:gap-14 pt-10 lg:pt-20 pb-5 lg:pb-10">
+            <div className="font-primary m-0 p-0 box-border container mx-auto px-6 flex flex-col justify-between items-center gap-10 lg:gap-14 pt-10 lg:pt-20 pb-5 lg:pb-10">
                 <div className="flex flex-wrap justify-between items-end gap-6 w-full">
                     <div className="flex flex-col justify-between items-start gap-2">
                         <img src={logoErg} alt="Logo ERG" className="w-30 object-cover"/>

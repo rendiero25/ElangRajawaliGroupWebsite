@@ -23,7 +23,7 @@ const Header = ({headerMenu}) => {
 
     return (
         <div style={{backgroundImage: `url(${bgHeader})`, width: "100%", height: "100%", backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat" }}> 
-            <div className="container mx-auto px-6 flex flex-row justify-between items-center">
+            <div className="font-primary m-0 p-0 box-border container mx-auto px-6 flex flex-row justify-between items-center">
                 {/* logo */}
                 <div className="w-20 py-2 flex justify-center items-center">
                     <img src={logoErg} alt="Logo ERG" className="w-full object-cover"/>

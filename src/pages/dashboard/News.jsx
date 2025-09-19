@@ -62,17 +62,33 @@ const News = () => {
     };
 
     const formatDate = (dateString) => {
+        if (!dateString) return 'No date';
         const date = new Date(dateString);
-        return date.toLocaleDateString('id-ID', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
+        if (isNaN(date.getTime())) return 'Invalid date';
+        
+        // Format as mm-dd-yyyy
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const year = date.getFullYear();
+        
+        return `${month}-${day}-${year}`;
     };
 
     const truncateDescription = (description, maxLength = 100) => {
-        if (description.length <= maxLength) return description;
-        return description.substring(0, maxLength) + '...';
+        if (!description) return 'No description';
+        
+        // Remove HTML tags and metadata
+        let cleanDescription = description
+            .replace(/<[^>]*>/g, '') // Remove HTML tags
+            .replace(/data-metadata="[^"]*"/g, '') // Remove data-metadata
+            .replace(/&lt;!--\(figmeta\)[^>]*--&gt;/g, '') // Remove figma metadata
+            .replace(/&lt;/g, '<')
+            .replace(/&gt;/g, '>')
+            .replace(/&amp;/g, '&')
+            .trim();
+            
+        if (cleanDescription.length <= maxLength) return cleanDescription;
+        return cleanDescription.substring(0, maxLength) + '...';
     };
 
     if (showForm) {
@@ -193,15 +209,54 @@ const News = () => {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                {item.image ? (
-                                                    <img 
-                                                        src={item.image} 
-                                                        alt={item.title}
-                                                        className="h-10 w-16 object-cover rounded"
-                                                    />
-                                                ) : (
-                                                    <span className="text-gray-400 text-sm">No image</span>
-                                                )}
+                                                <div className="relative">
+                                                    {(() => {
+                                                        // Convert relative path to full URL
+                                                        const getFullImageUrl = (url) => {
+                                                            if (!url) return null;
+                                                            if (url.startsWith('http')) return url; // Already full URL
+                                                            if (url.startsWith('/uploads/')) return `http://localhost:5000${url}`;
+                                                            return url;
+                                                        };
+                                                        
+                                                        const imageUrl = getFullImageUrl(item.image);
+                                                        const isValidImage = imageUrl && 
+                                                                           imageUrl !== 'file-will-be-uploaded' && 
+                                                                           imageUrl.trim() !== '';
+                                                        
+                                                        if (isValidImage) {
+                                                            return (
+                                                                <div>
+                                                                    <img 
+                                                                        src={imageUrl} 
+                                                                        alt={item.title || 'News image'}
+                                                                        className="h-10 w-16 object-cover rounded"
+                                                                        onLoad={() => {
+                                                                            console.log('✅ Dashboard image loaded:', imageUrl);
+                                                                        }}
+                                                                        onError={(e) => {
+                                                                            console.log('❌ Dashboard image failed:', imageUrl);
+                                                                            e.target.style.display = 'none';
+                                                                            e.target.nextElementSibling.style.display = 'block';
+                                                                        }}
+                                                                    />
+                                                                    <div 
+                                                                        className="text-gray-400 text-xs bg-red-100 rounded p-1 text-center"
+                                                                        style={{ display: 'none' }}
+                                                                    >
+                                                                        Image Error
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        } else {
+                                                            return (
+                                                                <div className="h-10 w-16 bg-gray-200 rounded flex items-center justify-center">
+                                                                    <span className="text-gray-400 text-xs">No image</span>
+                                                                </div>
+                                                            );
+                                                        }
+                                                    })()}
+                                                </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                                 <div className="flex gap-2">
@@ -308,57 +363,97 @@ const NewsForm = ({ news, onClose, onSuccess }) => {
                 return;
             }
 
-            // Prepare data to send
-            const dataToSend = {
-                title: formData.title.trim(),
-                unitBusiness: formData.unitBusiness.trim(),
-                description: formData.description.trim(),
-                date: formData.date || new Date().toISOString().split('T')[0],
-                image: imageFile ? 'file-will-be-uploaded' : (formData.image?.trim() || '')
-            };
-
-            console.log('📤 Data to send to backend:', dataToSend);
-            console.log('🔗 API URL:', `${API_URL}/simple`);
-
             let response;
-            if (news?._id) {
-                // Update existing news 
-                console.log('🔄 Updating existing news:', news._id);
-                response = await axios.put(`${API_URL}/${news._id}`, dataToSend, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+            
+            if (imageFile) {
+                // Handle file upload using FormData
+                const formDataToSend = new FormData();
+                formDataToSend.append('title', formData.title.trim());
+                formDataToSend.append('unitBusiness', formData.unitBusiness.trim());
+                formDataToSend.append('description', formData.description.trim());
+                formDataToSend.append('date', formData.date || new Date().toISOString().split('T')[0]);
+                formDataToSend.append('image', imageFile);
+
+                console.log('📤 Sending FormData with file:', {
+                    title: formData.title.trim(),
+                    unitBusiness: formData.unitBusiness.trim(),
+                    description: formData.description.trim(),
+                    date: formData.date || new Date().toISOString().split('T')[0],
+                    imageFile: imageFile.name
                 });
-            } else {
-                // Create new news
-                console.log('➕ Creating new news');
-                console.log('🔗 Full API URL:', `${API_URL}/simple`);
-                
-                // First test basic connectivity
-                try {
-                    console.log('🔍 Testing connectivity to:', `${API_URL}/test`);
-                    const testResponse = await axios.get(`${API_URL}/test`);
-                    console.log('✅ Test endpoint working:', testResponse.data);
-                } catch (testError) {
-                    console.error('❌ Test endpoint failed:', testError);
-                    console.error('❌ Status:', testError.response?.status);
-                    console.error('❌ Status Text:', testError.response?.statusText);
-                    console.error('❌ Response Data:', testError.response?.data);
-                    throw new Error(`Backend server error: ${testError.response?.status} ${testError.response?.statusText}. URL: ${API_URL}/test`);
+
+                if (news?._id) {
+                    // Update existing news with file
+                    console.log('🔄 Updating existing news with file:', news._id);
+                    response = await axios.put(`${API_URL}/${news._id}`, formDataToSend, {
+                        headers: {
+                            'Content-Type': 'multipart/form-data',
+                        },
+                    });
+                } else {
+                    // Create new news with file (use main endpoint, not /simple)
+                    console.log('➕ Creating new news with file');
+                    console.log('📁 Using endpoint:', API_URL);
+                    response = await axios.post(API_URL, formDataToSend, {
+                        headers: {
+                            'Content-Type': 'multipart/form-data',
+                        },
+                    });
                 }
-                
-                response = await axios.post(`${API_URL}/simple`, dataToSend, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                });
+            } else {
+                // Handle text/URL data using JSON
+                const dataToSend = {
+                    title: formData.title.trim(),
+                    unitBusiness: formData.unitBusiness.trim(),
+                    description: formData.description.trim(),
+                    date: formData.date || new Date().toISOString().split('T')[0],
+                    image: formData.image?.trim() || ''
+                };
+
+                console.log('📤 Sending JSON data:', dataToSend);
+
+                if (news?._id) {
+                    // Update existing news 
+                    console.log('🔄 Updating existing news:', news._id);
+                    response = await axios.put(`${API_URL}/${news._id}`, dataToSend, {
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    });
+                } else {
+                    // Create new news
+                    console.log('➕ Creating new news');
+                    
+                    // First test basic connectivity
+                    try {
+                        console.log('🔍 Testing connectivity to:', `${API_URL}/test`);
+                        const testResponse = await axios.get(`${API_URL}/test`);
+                        console.log('✅ Test endpoint working:', testResponse.data);
+                    } catch (testError) {
+                        console.error('❌ Test endpoint failed:', testError);
+                        console.error('❌ Status:', testError.response?.status);
+                        console.error('❌ Status Text:', testError.response?.statusText);
+                        console.error('❌ Response Data:', testError.response?.data);
+                        throw new Error(`Backend server error: ${testError.response?.status} ${testError.response?.statusText}. URL: ${API_URL}/test`);
+                    }
+                    
+                    response = await axios.post(`${API_URL}/simple`, dataToSend, {
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    });
+                }
             }
 
             console.log('✅ Server Response:', response.data);
             
-            if (response.data.success) {
+            // Check if response indicates success
+            if (response.data && (response.data.success === true || response.status === 200 || response.status === 201)) {
                 console.log('🎉 News saved successfully to MongoDB!');
-                console.log('📄 Document ID:', response.data.data._id);
+                
+                // Try to get document ID if available
+                const documentId = response.data.data?._id || response.data._id || 'N/A';
+                console.log('📄 Document ID:', documentId);
                 
                 // Show success message
                 const successMessage = news?._id ? 'Berita berhasil diperbarui!' : 'Berita berhasil disimpan ke database!';
@@ -366,11 +461,52 @@ const NewsForm = ({ news, onClose, onSuccess }) => {
                 
                 onSuccess(successMessage);
             } else {
-                throw new Error(response.data.error || 'Unknown error occurred');
+                // More detailed error handling
+                const errorMessage = response.data?.error || 
+                                   response.data?.message || 
+                                   `Server returned status ${response.status}: ${response.statusText}` ||
+                                   'Unknown error occurred';
+                console.error('❌ Server error details:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    data: response.data
+                });
+                throw new Error(errorMessage);
             }
         } catch (error) {
             console.error('Error saving news:', error);
-            setError(error.response?.data?.error || 'Terjadi kesalahan saat menyimpan berita');
+            
+            // More detailed error logging
+            console.error('❌ Full error details:', {
+                message: error.message,
+                response: error.response?.data,
+                status: error.response?.status,
+                statusText: error.response?.statusText,
+                config: {
+                    url: error.config?.url,
+                    method: error.config?.method,
+                    data: error.config?.data
+                }
+            });
+            
+            // Better error message for user
+            let userErrorMessage = 'Terjadi kesalahan saat menyimpan berita';
+            
+            if (error.response) {
+                // Server responded with error status
+                const serverError = error.response.data?.error || 
+                                  error.response.data?.message || 
+                                  error.response.statusText;
+                userErrorMessage = `Server Error (${error.response.status}): ${serverError}`;
+            } else if (error.request) {
+                // Network error
+                userErrorMessage = 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.';
+            } else {
+                // Other error
+                userErrorMessage = `Error: ${error.message}`;
+            }
+            
+            setError(userErrorMessage);
         } finally {
             setLoading(false);
         }
