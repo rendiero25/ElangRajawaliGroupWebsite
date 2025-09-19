@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import HeroForm from '../../components/dashboard/HeroForm';
+import NewsForm from '../../components/dashboard/NewsForm';
 
 const CompanyProfile = () => {
     const [selectedSection, setSelectedSection] = useState('hero');
     
     const sections = [
         { id: 'hero', name: 'Hero Section', description: 'Main banner section' },
-        { id: 'about', name: 'About Section', description: 'Coming soon' },
+        { id: 'news', name: 'News Section', description: 'Manage news title and subtitle' },
         { id: 'services', name: 'Services Section', description: 'Coming soon' },
         { id: 'contact', name: 'Contact Section', description: 'Coming soon' }
     ];
@@ -15,6 +16,8 @@ const CompanyProfile = () => {
         switch (selectedSection) {
             case 'hero':
                 return <HeroForm />;
+            case 'news':
+                return <NewsForm />;
             default:
                 return (
                     <div className="bg-white p-6 rounded-lg shadow">

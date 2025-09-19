@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import dotenv from "dotenv";
 import path from 'path';
 import { fileURLToPath } from 'url';
+import multer from 'multer';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -23,7 +24,17 @@ app.use((req, res, next) => {
     }
 });
 
+// Request logging middleware
+app.use((req, res, next) => {
+    console.log(`📥 ${new Date().toISOString()} - ${req.method} ${req.path}`);
+    if (req.body && typeof req.body === 'object' && Object.keys(req.body).length > 0) {
+        console.log('📋 Request body:', req.body);
+    }
+    next();
+});
+
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Route root
 app.get("/", (req, res) => {
@@ -74,16 +85,47 @@ import newsRoutes from "./routes/news.js";
 app.use("/api", sectionRoutes);
 app.use("/api/news", newsRoutes);
 
+// Global error handler
+app.use((error, req, res, next) => {
+    console.error('=== GLOBAL ERROR HANDLER ===');
+    console.error('Error:', error);
+    console.error('Stack:', error.stack);
+    
+    if (error instanceof multer.MulterError) {
+        return res.status(400).json({
+            error: 'File upload error',
+            details: error.message
+        });
+    }
+    
+    res.status(500).json({
+        error: 'Internal server error',
+        message: error.message,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+});
 
 //MongoDB Connect
-console.log("MONGO_URI:", process.env.MONGO_URI);
+console.log("=== STARTING SERVER ===");
+console.log("MONGO_URI exists:", !!process.env.MONGO_URI);
+console.log("NODE_ENV:", process.env.NODE_ENV || "development");
+
 mongoose.connect(process.env.MONGO_URI)
     .then(() => {
-        console.log("Connected to MongoDB");
+        console.log("✅ Successfully connected to MongoDB");
+        console.log("📊 Database:", mongoose.connection.name);
+        console.log("🔗 Connection state:", mongoose.connection.readyState);
+        
         app.listen(5000, () => {
-            console.log("Server running on port 5000");
+            console.log("🚀 Server running on http://localhost:5000");
+            console.log("📚 Available endpoints:");
+            console.log("   - GET  /api/news (get all news)");
+            console.log("   - POST /api/news/simple (create news)");
+            console.log("   - POST /api/news/test (test endpoint)");
         });
     })
     .catch((err) => {
-        console.log(err);
+        console.error("❌ MongoDB connection failed:");
+        console.error(err.message);
+        process.exit(1);
     });

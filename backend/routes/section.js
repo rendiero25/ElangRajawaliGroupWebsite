@@ -10,6 +10,14 @@ const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
+// Test route for news endpoint
+router.get("/test/news", (req, res) => {
+    res.json({ 
+        message: "News test endpoint working!",
+        timestamp: new Date().toISOString()
+    });
+});
+
 // Debug route - list all available endpoints
 router.get("/debug/routes", (req, res) => {
     res.json({
@@ -17,6 +25,8 @@ router.get("/debug/routes", (req, res) => {
         routes: [
             "GET /api/companyprofile/section/hero - Get hero section data",
             "POST /api/companyprofile/section/hero - Update hero section with file upload",
+            "GET /api/companyprofile/section/news - Get news section data",
+            "POST /api/companyprofile/section/news - Update news section",
             "GET /api/sections/:website/:section - Legacy get section",
             "POST /api/sections - Legacy create/update section",
             "PUT /api/sections/:website/:section - Legacy update section"
@@ -104,6 +114,44 @@ router.post("/companyprofile/section/hero", upload.single('backgroundVideo'), as
     }
 });
 
+// POST - Update news section
+router.post("/companyprofile/section/news", async (req, res) => {
+    try {
+        // Set default values for news section
+        const website = 'compro';
+        const section = 'news';
+        const { title, subtitle } = req.body;
+        
+        // Build the section data
+        const sectionData = {
+            website,
+            section,
+            title,
+            subtitle
+        };
+        
+        const updated = await Section.findOneAndUpdate(
+            { website, section }, 
+            sectionData, 
+            { new: true, upsert: true }
+        );
+        
+        res.status(200).json({
+            success: true,
+            section: 'news',
+            data: updated,
+            message: 'News section updated successfully',
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('News update error:', error);
+        res.status(500).json({ 
+            success: false,
+            error: error.message 
+        });
+    }
+});
+
 // POST - Create/Update section (without file) - Legacy route
 router.post("/sections", async (req, res) => {
     try {
@@ -147,6 +195,38 @@ router.get("/companyprofile/section/hero", async (req, res) => {
             success: false,
             error: error.message,
             section: 'hero'
+        });
+    }
+});
+
+// GET news section data
+router.get("/companyprofile/section/news", async (req, res) => {
+    try {
+        const data = await Section.findOne({
+            website: 'compro',
+            section: 'news'
+        });
+        
+        if (!data) {
+            return res.status(404).json({
+                success: false,
+                message: 'News section not found',
+                section: 'news'
+            });
+        }
+        
+        res.status(200).json({
+            success: true,
+            section: 'news',
+            data: data,
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('Error fetching news section:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            section: 'news'
         });
     }
 });

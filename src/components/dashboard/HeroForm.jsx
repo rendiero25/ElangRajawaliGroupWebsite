@@ -19,7 +19,7 @@ const HeroForm = () => {
     useEffect(() => {
         const fetchHeroData = async () => {
             try {
-                const response = await fetch('http://localhost:5000/api/companyprofile/section/hero');
+                const response = await fetch('/api/companyprofile/section/hero');
                 if (response.ok) {
                     const result = await response.json();
                     if (result.success && result.data) {
@@ -98,7 +98,7 @@ const HeroForm = () => {
                 formDataToSend.append('backgroundVideo', formData.backgroundVideo);
             }
 
-            const response = await fetch('http://localhost:5000/api/companyprofile/section/hero', {
+            const response = await fetch('/api/companyprofile/section/hero', {
                 method: 'POST',
                 body: formDataToSend // Don't set Content-Type header, let browser set it for FormData
             });
