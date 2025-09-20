@@ -27,6 +27,10 @@ router.get("/debug/routes", (req, res) => {
             "POST /api/companyprofile/section/hero - Update hero section with file upload",
             "GET /api/companyprofile/section/news - Get news section data",
             "POST /api/companyprofile/section/news - Update news section",
+            "GET /api/companyprofile/section/aboutus - Get about us section data",
+            "POST /api/companyprofile/section/aboutus - Update about us section with multiple image uploads (backgroundImage, image)",
+            "GET /api/companyprofile/section/whyus - Get whyus section data",
+            "POST /api/companyprofile/section/whyus - Update whyus section",
             "GET /api/sections/:website/:section - Legacy get section",
             "POST /api/sections - Legacy create/update section",
             "PUT /api/sections/:website/:section - Legacy update section"
@@ -52,7 +56,8 @@ const storage = multer.diskStorage({
     }
 });
 
-const upload = multer({ 
+// Upload for videos (hero section)
+const uploadVideo = multer({ 
     storage: storage,
     fileFilter: (req, file, cb) => {
         // Accept video files only
@@ -67,8 +72,24 @@ const upload = multer({
     }
 });
 
+// Upload for images (about us section)
+const uploadImage = multer({ 
+    storage: storage,
+    fileFilter: (req, file, cb) => {
+        // Accept image files only
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Only image files are allowed!'), false);
+        }
+    },
+    limits: {
+        fileSize: 10 * 1024 * 1024 // 10MB limit
+    }
+});
+
 // POST - Update hero section with file upload
-router.post("/companyprofile/section/hero", upload.single('backgroundVideo'), async (req, res) => {
+router.post("/companyprofile/section/hero", uploadVideo.single('backgroundVideo'), async (req, res) => {
     try {
         // Set default values for hero section
         const website = 'compro';
@@ -250,6 +271,203 @@ router.put("/sections/:website/:section", async (req, res) => {
         res.json(updated);
     } catch (error) {
         res.status(500).json({error: error.message});
+    }
+});
+
+// POST - Update about us section with multiple image uploads
+router.post("/companyprofile/section/aboutus", uploadImage.fields([
+    { name: 'backgroundImage', maxCount: 1 },
+    { name: 'image', maxCount: 1 }
+]), async (req, res) => {
+    try {
+        // Set default values for about us section
+        const website = 'compro';
+        const section = 'aboutus';
+        const { title, subtitle, description, buttonText } = req.body;
+        
+        // Build the section data
+        const sectionData = {
+            website,
+            section,
+            title,
+            subtitle,
+            description,
+            buttonText
+        };
+        
+        // Add background image file path if uploaded
+        if (req.files && req.files['backgroundImage'] && req.files['backgroundImage'][0]) {
+            sectionData.backgroundImage = `/uploads/${req.files['backgroundImage'][0].filename}`;
+        }
+        
+        // Add image file path if uploaded
+        if (req.files && req.files['image'] && req.files['image'][0]) {
+            sectionData.image = `/uploads/${req.files['image'][0].filename}`;
+        }
+        
+        const updated = await Section.findOneAndUpdate(
+            { website, section }, 
+            sectionData, 
+            { new: true, upsert: true }
+        );
+        
+        res.status(200).json({
+            success: true,
+            section: 'aboutus',
+            data: updated,
+            message: 'About Us section updated successfully',
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('About Us update error:', error);
+        res.status(500).json({ 
+            success: false,
+            error: error.message 
+        });
+    }
+});
+
+// GET about us section data
+router.get("/companyprofile/section/aboutus", async (req, res) => {
+    try {
+        const data = await Section.findOne({
+            website: 'compro',
+            section: 'aboutus'
+        });
+        
+        if (!data) {
+            return res.status(404).json({
+                success: false,
+                message: 'About Us section not found',
+                section: 'aboutus'
+            });
+        }
+        
+        res.status(200).json({
+            success: true,
+            section: 'aboutus',
+            data: data,
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('Error fetching about us section:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            section: 'aboutus'
+        });
+    }
+});
+
+// POST - Update whyus section with background image upload
+router.post("/companyprofile/section/whyus", uploadImage.single('backgroundImageWhyus'), async (req, res) => {
+    try {
+        // Set default values for whyus section
+        const website = 'compro';
+        const section = 'whyus';
+        // Debug logging
+        console.log('=== WHYUS POST REQUEST ===');
+        console.log('Request body:', req.body);
+        console.log('Request file:', req.file);
+        
+        const { 
+            subtitle, 
+            title, 
+            description, 
+            whyus1Title, 
+            whyus1Description,
+            whyus2Title, 
+            whyus2Description,
+            whyus3Title, 
+            whyus3Description 
+        } = req.body || {};
+        
+        console.log('Extracted data:', {
+            subtitle, title, description,
+            whyus1Title, whyus1Description,
+            whyus2Title, whyus2Description,
+            whyus3Title, whyus3Description
+        });
+        
+        // Validate required fields
+        if (!req.body) {
+            return res.status(400).json({
+                success: false,
+                error: 'Request body is empty or not properly parsed'
+            });
+        }
+        
+        // Build the section data
+        const sectionData = {
+            website,
+            section,
+            subtitle: subtitle || '',
+            title: title || '',
+            description: description || '',
+            whyus1Title: whyus1Title || '',
+            whyus1Description: whyus1Description || '',
+            whyus2Title: whyus2Title || '',
+            whyus2Description: whyus2Description || '',
+            whyus3Title: whyus3Title || '',
+            whyus3Description: whyus3Description || ''
+        };
+        
+        // Add background image file path if uploaded
+        if (req.file) {
+            sectionData.backgroundImageWhyus = `/uploads/${req.file.filename}`;
+        }
+        
+        const updated = await Section.findOneAndUpdate(
+            { website, section }, 
+            sectionData, 
+            { new: true, upsert: true }
+        );
+        
+        res.status(200).json({
+            success: true,
+            section: 'whyus',
+            data: updated,
+            message: 'Why Us section updated successfully',
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('❌ Why Us update error:', error);
+        res.status(500).json({ 
+            success: false,
+            error: error.message 
+        });
+    }
+});
+
+// GET whyus section data
+router.get("/companyprofile/section/whyus", async (req, res) => {
+    try {
+        const data = await Section.findOne({
+            website: 'compro',
+            section: 'whyus'
+        });
+        
+        if (!data) {
+            return res.status(404).json({
+                success: false,
+                message: 'Why Us section not found',
+                section: 'whyus'
+            });
+        }
+        
+        res.status(200).json({
+            success: true,
+            section: 'whyus',
+            data: data,
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('Error fetching whyus section:', error);
+        res.status(500).json({
+            success: false,
+            error: error.message,
+            section: 'whyus'
+        });
     }
 });
 

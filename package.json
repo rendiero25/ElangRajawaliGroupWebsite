@@ -9,7 +9,9 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "start": "concurrently -n \"BACKEND,FRONTEND\" -c \"bgBlue.bold,bgGreen.bold\" \"npm run start:backend\" \"npm run dev\"",
-    "start:backend": "node backend/server.js"
+    "start:backend": "cd backend && npm start",
+    "backend": "cd backend && npm start",
+    "full": "concurrently -n \"BACKEND,FRONTEND\" -c \"bgBlue.bold,bgGreen.bold\" \"npm run backend\" \"npm run dev\""
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.13",

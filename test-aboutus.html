@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test About Us API</title>
+</head>
+<body>
+    <h1>Test About Us API</h1>
+    <form id="testForm">
+        <div>
+            <label>Title:</label>
+            <input type="text" name="title" value="Test Title" required>
+        </div>
+        <div>
+            <label>Subtitle:</label>
+            <input type="text" name="subtitle" value="Test Subtitle">
+        </div>
+        <div>
+            <label>Description:</label>
+            <textarea name="description">Test Description</textarea>
+        </div>
+        <div>
+            <label>Button Text:</label>
+            <input type="text" name="buttonText" value="Learn More">
+        </div>
+        <div>
+            <label>Image:</label>
+            <input type="file" name="image" accept="image/*">
+        </div>
+        <button type="submit">Test Submit</button>
+    </form>
+    <div id="result"></div>
+
+    <script>
+        document.getElementById('testForm').onsubmit = async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            formData.append('title', document.querySelector('[name="title"]').value);
+            formData.append('subtitle', document.querySelector('[name="subtitle"]').value);
+            formData.append('description', document.querySelector('[name="description"]').value);
+            formData.append('buttonText', document.querySelector('[name="buttonText"]').value);
+            
+            const imageFile = document.querySelector('[name="image"]').files[0];
+            if (imageFile) {
+                formData.append('image', imageFile);
+            }
+
+            try {
+                console.log('Sending to: http://localhost:5000/api/companyprofile/section/aboutus');
+                
+                const response = await fetch('http://localhost:5000/api/companyprofile/section/aboutus', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                console.log('Response status:', response.status);
+                console.log('Response ok:', response.ok);
+
+                const result = await response.json();
+                console.log('Response data:', result);
+                
+                document.getElementById('result').innerHTML = `
+                    <h3>Response:</h3>
+                    <pre>${JSON.stringify(result, null, 2)}</pre>
+                `;
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('result').innerHTML = `<h3>Error:</h3><pre>${error.message}</pre>`;
+            }
+        };
+    </script>
+</body>
+</html>

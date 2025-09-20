@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import HeroForm from '../../components/dashboard/HeroForm';
 import NewsForm from '../../components/dashboard/NewsForm';
+import AboutUsForm from '../../components/dashboard/AboutUsForm';
+import WhyUsForm from '../../components/dashboard/WhyUsForm';
 
 const CompanyProfile = () => {
     const [selectedSection, setSelectedSection] = useState('hero');
@@ -8,8 +10,8 @@ const CompanyProfile = () => {
     const sections = [
         { id: 'hero', name: 'Hero Section', description: 'Main banner section' },
         { id: 'news', name: 'News Section', description: 'Manage news title and subtitle' },
-        { id: 'services', name: 'Services Section', description: 'Coming soon' },
-        { id: 'contact', name: 'Contact Section', description: 'Coming soon' }
+        { id: 'aboutus', name: 'About Us Section', description: 'Manage about us content' },
+        { id: 'whyus', name: 'Why Us', description: 'Manage why us section' }
     ];
 
     const renderSectionForm = () => {
@@ -18,6 +20,10 @@ const CompanyProfile = () => {
                 return <HeroForm />;
             case 'news':
                 return <NewsForm />;
+            case 'aboutus':
+                return <AboutUsForm />;
+            case 'whyus':
+                return <WhyUsForm />;
             default:
                 return (
                     <div className="bg-white p-6 rounded-lg shadow">
@@ -40,7 +46,7 @@ const CompanyProfile = () => {
                             <button
                                 key={section.id}
                                 onClick={() => setSelectedSection(section.id)}
-                                className={`w-full text-left p-3 rounded-lg transition-colors ${
+                                className={`w-full text-left p-3 rounded-lg transition-colors cursor-pointer ${
                                     selectedSection === section.id
                                         ? 'bg-blue-600 text-white'
                                         : 'bg-white text-gray-700 hover:bg-gray-50 border'

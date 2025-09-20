@@ -16,7 +16,16 @@ const sectionSchema = new mongoose.Schema({
     icon: String,
     button: String,
     textButton: String,
-    infoSideButton: String
+    infoSideButton: String,
+    
+    // Why Us section fields
+    backgroundImageWhyus: String,
+    whyus1Title: String,
+    whyus1Description: String,
+    whyus2Title: String,
+    whyus2Description: String,
+    whyus3Title: String,
+    whyus3Description: String
 });
 
 export default mongoose.model("Section", sectionSchema);
